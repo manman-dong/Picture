@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Photos and Videos</title>
+    <style type="text/css">
+        #sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 200px;
+            height: 100%;
+            background-color: #f5f5f5;
+        }
+
+        #content {
+            margin-left: 220px; /* 留出侧边栏宽度 */
+        }
+
+        .pagination a {
+          display: inline-block;
+          padding: 4px 8px;
+          margin-right: 4px;
+          border-radius :3px ;
+          background-color:#eee;
+
+      }
+      .pagination a.active{
+         font-weight:bold ;
+         background-color:#aaa;
+
+     }
+ </style>
+</head>
+<body>
+
+<div id="sidebar">
+   <ul>
+       <li><a href="#home">Home</a></li>
+       <li><a href="#photos">Photos</a></li>
+       <li><a href="#videos">Videos</a></li>
+   </ul> 
+</div>
+
+<div id="content">
+
+<h2>Welcome to My Gallery!</h2>
+
+<div class="section" id="home"></div>
+
+<div class ="section" id = "photos"></div>
+
+<div class ="section"id = "videos"></div>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+<script type = "text/javascript">
+
+$(document).ready(function() {
+
+//默认显示首页内容
+$(".section").hide();
+$("#home").show();
+
+//点击侧边栏链接时，显示对应的内容
+$("a").click(function(){
+    var sectionId = $(this).attr("href");
+    $(".section").hide();
+    $(sectionId).show();
+});
+
+// 获取照片列表并分页展示
+function showPhotos(page) {
+  $.get("https://api.github.com/repos/manman-dong/picture/git/trees/main?recursive=1", function(data) {
+      var photos = data.tree.filter(function(file) {
+        return file.path.startsWith("picture/") && file.type === "blob";
+      });
+
+      var perPage = 12; // 每页展示12张照片
+
+      var startIdx = (page - 1) * perPage;
+      var endIdx = page * perPage;
+
+      for (var i = startIdx; i < endIdx && i < photos.length; i++) {
+          var photoUrl = "https://raw.githubusercontent.com/manman-dong/picture/main/" + encodeURIComponent(photos[i].path);
+          $("#photos").append('<img src="' + photoUrl + '" alt="' + photos[i].path + '">');
+      }
+
+       // 分页逻辑，根据总照片数量计算所需页面数量，并创建相应的分页链接
+       if (photos.length > perPage) {
+           var totalPages = Math.ceil(photos.length / perPage);
+
+           $(".pagination.photos a").remove();
+
+           for (var j = 1; j <= totalPages; j++) {
+
+               if(j===page){
+                $('.pagination.photos').append('<a class="active" href="#"></a>');
+            }else{
+                $('.pagination.photos').append('<a href="#"></a>');
+            }
+        }
+    }
+});
+}
+
+// 获取视频列表并分页展示
+function showVideos(page) {
+   $.get("https://api.github.com/repos/manman-dong/picture/git/trees/main?recursive=2", function(data) {
+       var videos = data.tree.filter(function(file) {
+         return file.path.startsWith("video/") && file.type === "blob";
+       });
+ 
+       var perPage = 8; // 每页展示8个视频
+ 
+       var startIdx = (page - 1) * perPage;
+       var endIdx = page * perPage;
+ 
+       for (var i = startIdx; i < endIdx && i < videos.length; i++) {
+           var videoUrl = "https://github.com/manman-dong/picture/raw/main/" + encodeURIComponent(videos[i].path);
+           $("#videos").append('<video controls><source src="' + videoUrl + '" type="video/mp4"></video>');
+         }
+         
+     // 分页逻辑，根据总视频数量计算所需页面数量，并创建相应的分页链接
+     if (videos.length > perPage) {
+         var totalPages = Math.ceil(videos.length / perPage);
+
+          $(".pagination.videos a").remove();
+
+         for (var j = 1; j <= totalPages; j++) {
+
+             if(j===page){
+                $('.pagination.videos').append('<a class="active" href="#"></a>');
+            }else{
+                $('.pagination.videos').append('<a href="#"></a>');
+            }
+        }
+    }
+});
+}
+  
+// 点击照片侧边栏时触发加载照片函数
+$("a[href='#photos']").click(function() {
+    $(".section").hide();
+    $("#photos").show();
+    $("#photos").empty(); // 清空之前的内容
+    showPhotos(1); // 默认显示第一页
+});
+  
+// 点击视频侧边栏时触发加载视频函数
+$("a[href='#videos']").click(function() {
+    $(".section").hide();
+    $("#videos").show();
+    $("#videos").empty(); // 清空之前的内容
+    showVideos(1); // 默认显示第一页
+});
+
+});
+</script>
+
+<!-- 分页链接容器 -->
+<div class="pagination photos"></div>
+<div class="pagination videos"></div>
+
+</div>
+
+
+</body>
+</html>
